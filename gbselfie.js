@@ -104,6 +104,7 @@ var GBSelfie = {
 		GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
 		
 		if(!GBSelfie.frameDrawn) {
+			console.log("Skipped tick");
 			return;
 		}
 		
@@ -159,6 +160,7 @@ var GBSelfie = {
         GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
 		
 		if(GBSelfie.frameDrawn) {
+			console.log("Skipped draw");
 			return;
 		}
 		
