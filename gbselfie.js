@@ -53,7 +53,7 @@ var GBSelfie = {
 		
 		if(navigator.getUserMedia) {
 			navigator.getUserMedia(
-				{video: {width: 640, height: 576, facingMode: "user"}},
+				{video: {width: 160, height: 144, facingMode: "user"}},
 				GBSelfie.load,
 				function(e) {
 					console.log(e);
@@ -83,6 +83,7 @@ var GBSelfie = {
 			
             GBSelfie.shutter.addEventListener("click",function() {
                 var timestamp = Date.now();
+				
                 cancelAnimationFrame(GBSelfie.drawId);
 				clearTimeout(GBSelfie.tick);
 				
@@ -132,7 +133,7 @@ var GBSelfie = {
         var pixel = input.data;
 
         // filter
-        for(var i = 0; i < pixel.length; i+=4) {
+        for(var i = 0; i < pixel.length; i += 4) {
             var x = i / 4 % width;
             var y = Math.floor(i / 4 / width);
             var map = GBSelfie.thresholdMap4x4[x % 4][y % 4];
@@ -152,13 +153,17 @@ var GBSelfie = {
             }
         }
 		GBSelfie.filterOutput = output;
+		GBSelfie.frameDrawn = false;
 	},
 	draw: function(timestamp) {
         GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
 		
-		if(GBSelfie.filterOutput) {
-			GBSelfie.ctx.putImageData(GBSelfie.filterOutput, 0, 0);
+		if(GBSelfie.frameDrawn) {
+			return;
 		}
+		
+		GBSelfie.ctx.putImageData(GBSelfie.filterOutput, 0, 0);
+		GBSelfie.frameDrawn = true;
     },
     orient: function() {
         var w = GBSelfie.video.videoWidth;
@@ -181,11 +186,11 @@ var GBSelfie = {
         GBSelfie.alertBox.innerHTML = "<strong>Oops!</strong> Sorry, but we can't access your webcam!";
     }
 };
+
 navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia ||
     navigator.mozGetUserMedia ||
     navigator.msGetUserMedia;
 
-window.addEventListener("orientationchange",GBSelfie.orient);
-
+window.addEventListener("orientationchange", GBSelfie.orient);
 window.addEventListener("load",GBSelfie.init);
