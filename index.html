@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Game Boy Selfie</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <!-- SEO -->
+        <meta name="application-name" content="Game Boy Selfie" />
+        <meta name="author" content="Kyle Amoroso" />
+        <meta name="description" content="A selfie web filter that lets you capture yourself in a Nintendo Game Boy." />
+		<meta name="keywords" content="game boy selfie,nintendo,game boy,selfie,filter,html5" />
+        <meta name="version" content="1.0" />
+        <meta property="og:title" content="Game Boy Selfie" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="http://pitt.edu/~ksa18/selfie/" />
+        <meta property="og:image" content="http://pitt.edu/~ksa18/selfie/images/splash.png" />
+        <meta property="og:description" content="A selfie filter that lets you capture yourself in a Nintendo Game Boy." />
+        <!-- Favicons -->
+        <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+        <link rel="icon" type="image/png" href="icons/favicon-16.png" />
+        <link rel="icon" type="image/png" href="icons/favicon-32.png" />
+        <link rel="icon" type="image/png" href="icons/favicon-64.png" />
+        <link rel="icon" type="image/png" href="icons/favicon-128.png" />
+        <!-- Bootstrap 3 -->
+        <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+        <!-- Custom -->
+        <link rel="stylesheet" href="style.css" />
+        <script src="gbselfie.js"></script>
+    </head>
+    
+    <body>
+        <div class="container">
+            <header>
+                <h1 class="text-uppercase">Game Boy Selfie</h1>
+				<p class="lead text-uppercase text-muted">Capture yourself in a Nintendo Game Boy</p>
+            </header>
+            <div class="alert alert-warning" role="status">
+                <strong>Wait!</strong> You must grant the browser permission to access your webcam!
+            </div>
+            <div id="gameboy">
+                <video autoplay></video>
+                <div id="camera">
+                    <canvas id="screen" width="640" height="576"></canvas>
+                    <a href="#" download="" role="button" title="Take a selfie!" id="shutter"></a>
+                </div>
+                <img src="images/controls2.png" class="gb" />
+				<div class="panel panel-default">
+					<div class="panel-body clearfix">
+						<!-- Go to www.addthis.com/dashboard to customize your tools -->
+						<div class="addthis_sharing_toolbox pull-left"></div>
+						<div class="pull-right"><a href="https://chrome.google.com/webstore/detail/game-boy-selfie/hgibigpmlehhiiafhhmbpghhmchllomc"><img src="images/webstore.png" alt="Available in the Chrome Web Store" /></a></div>
+					</div>
+				</div>
+            </div>
+			<p><span class="label label-primary text-uppercase">Winner</span> MLH Prize in <a href="http://devpost.com/software/game-boy-selfie-w6j4a">Reinvent the Selfie</a> by <a href="http://devpost.com/">Devpost</a>.</p>
+            <footer class="well well-lg small text-muted">
+                <p>Game Boy Selfie created by Kyle Amoroso. Game Boy&reg; is a trademark of Nintendo Co., Ltd. which does not sponsor, authorise, or endorse this site in any way.</p>
+            </footer>
+        </div>
+		
+		<!-- Go to www.addthis.com/dashboard to customize your tools -->
+		<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f6488a45d1269e7"></script>
+    </body>
+</html>

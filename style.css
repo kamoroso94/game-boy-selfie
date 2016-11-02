@@ -1,0 +1,78 @@
+@font-face {
+  font-family: "Game Boy";
+  src: url("fonts/gameboy.eot");
+  src: url("fonts/gameboy.eot?#iefix") format("embedded-opentype"),
+		url("fonts/gameboy.woff") format("woff"),
+		url("fonts/gameboy.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Gill Sans MT";
+  src: url("fonts/gillsansmt.eot");
+  src: local("Gill Sans MT"),
+		url("fonts/gillsansmt.eot?#iefix") format("embedded-opentype"),
+		url("fonts/gillsansmt.woff") format("woff"),
+		url("fonts/gillsansmt.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.container {
+	font-family: "Game Boy",monospace;
+}
+
+header {
+	font-family: "Gill Sans MT",arial,sans-serif;
+	font-style: italic;
+}
+
+header h1 {
+	color: #101880;
+}
+
+@media only screen and (min-device-width: 768px) {
+	#gameboy {
+		margin: 0px auto;
+		max-width: 640px;
+	}
+}
+
+video {
+	display: none;
+}
+
+#camera {
+	position: relative;
+}
+
+canvas {
+	background: url("images/thumb.png");
+	background-size: cover;
+	width: 100%;
+}
+
+#shutter {
+	display: none;
+	position: absolute;
+	bottom: 5.555555555555555%;
+	left: 10%;
+	width: 80%;
+	height: 16.666666666666668%;
+	background: url("images/camera2.png");
+	background-position: 0% 0%;
+	background-size: cover;
+	cursor: pointer;
+	z-index: 1;
+}
+
+#shutter:active {
+	background-position: 0% 100%;
+}
+
+img.gb {
+	display: block;
+	margin-bottom: 20px;
+	width: 100%;
+}
