@@ -19,13 +19,6 @@
   font-style: normal;
 }
 
-@media only screen and (min-device-width: 768px) {
-	#gameboy {
-		margin: 0px auto;
-		max-width: 640px;
-	}
-}
-
 .container {
 	font-family: "Game Boy",monospace;
 }
@@ -39,6 +32,11 @@ header h1 {
 	color: #101880;
 }
 
+#gameboy {
+	margin: 0px auto;
+	max-width: 640px;
+}
+
 video {
 	display: none;
 }
@@ -48,9 +46,9 @@ video {
 }
 
 canvas {
+	width: 100%;
 	background: url("images/thumb.png");
 	background-size: cover;
-	width: 100%;
 }
 
 #shutter {
