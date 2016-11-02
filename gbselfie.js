@@ -6,6 +6,8 @@ var GBSelfie = {
     sound: null,
     canvas: null,
     ctx: null,
+	TPS: 30,
+	frameDrawn: true,
     draft: null,
     draftCtx: null,
 	filterOutput: null,
@@ -30,12 +32,14 @@ var GBSelfie = {
     ],
     init: function() {
         GBSelfie.sound = new Audio();
+		
         if(GBSelfie.sound.canPlayType("audio/mpeg")) {
             GBSelfie.sound.src = "audio/shutter.mp3";
         } else {
             GBSelfie.sound.src = "audio/shutter.ogg";
         }
-        GBSelfie.sound.preload = "auto";
+        
+		GBSelfie.sound.preload = "auto";
         GBSelfie.video = document.querySelector("video");
         GBSelfie.canvas = document.getElementById("screen");
         GBSelfie.ctx = GBSelfie.canvas.getContext("2d");
@@ -49,7 +53,7 @@ var GBSelfie = {
 		
 		if(navigator.getUserMedia) {
 			navigator.getUserMedia(
-				{video:{width:640,height:576,facingMode:"user"}},
+				{video: {width: 640, height: 576, facingMode: "user"}},
 				GBSelfie.load,
 				function(e) {
 					console.log(e);
@@ -64,51 +68,63 @@ var GBSelfie = {
     load: function(stream) {
         GBSelfie.video.src = window.URL.createObjectURL(stream);
         GBSelfie.localMediaStream = stream;
+		
         GBSelfie.video.addEventListener("loadeddata",function() {
             document.body.appendChild(GBSelfie.draft);
-            GBSelfie.alertBox.className = GBSelfie.alertBox.className.replace(/alert-\w+/,"alert-success");
+			GBSelfie.alertBox.classList.remove("alert-warning", "alert-danger");
+			GBSelfie.alertBox.classList.add("alert-success");
             GBSelfie.alertBox.innerHTML = "<strong>Connected!</strong> Click the camera icon to take a selfie!";
 			
             GBSelfie.orient();
             
             GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
-			GBSelfie.tickId = setTimeout(GBSelfie.tick,1000/60);
+			GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
             GBSelfie.shutter.style.display = "block";
+			
             GBSelfie.shutter.addEventListener("click",function() {
                 var timestamp = Date.now();
                 cancelAnimationFrame(GBSelfie.drawId);
 				clearTimeout(GBSelfie.tick);
+				
                 setTimeout(function() {
                     GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
-					GBSelfie.tickId = setTimeout(GBSelfie.tick,1000/60);
-                },500);
-                GBSelfie.sound.currentTime = 0;
+					GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
+                }, 500);
+                
+				GBSelfie.sound.currentTime = 0;
                 GBSelfie.sound.play();
+				
                 this.href = GBSelfie.canvas.toDataURL();
-                this.download = "img"+timestamp+".png";
+                this.download = "img" + timestamp + ".png";
             });
         });
     },
     tick: function() {
-		GBSelfie.tickId = setTimeout(GBSelfie.tick,1000/60);
+		GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
+		
+		if(!GBSelfie.frameDrawn) {
+			return;
+		}
+		
         GBSelfie.draftCtx.drawImage(
             GBSelfie.video,
             GBSelfie.offsetX,
             GBSelfie.offsetY,
-            10*GBSelfie.scale+GBSelfie.offsetX,
-            9*GBSelfie.scale+GBSelfie.offsetY,
+            10 * GBSelfie.scale + GBSelfie.offsetX,
+            9 * GBSelfie.scale + GBSelfie.offsetY,
             0,
             0,
             GBSelfie.draft.width,
             GBSelfie.draft.height
         );
+		
         var input = GBSelfie.draftCtx.getImageData(
             0,
             0,
             GBSelfie.draft.width,
             GBSelfie.draft.height
         );
-        var output = GBSelfie.draftCtx.createImageData(640,576);
+        var output = GBSelfie.draftCtx.createImageData(640, 576);
         
         // imageData
         var width = input.width;
@@ -116,22 +132,22 @@ var GBSelfie = {
         var pixel = input.data;
 
         // filter
-        for(var i=0; i<pixel.length; i+=4) {
-            var x = i/4%width;
-            var y = Math.floor(i/4/width);
-            var map = GBSelfie.thresholdMap4x4[x%4][y%4];
+        for(var i = 0; i < pixel.length; i+=4) {
+            var x = i / 4 % width;
+            var y = Math.floor(i / 4 / width);
+            var map = GBSelfie.thresholdMap4x4[x % 4][y % 4];
             
-            var gray = Math.floor(0.2126*pixel[i+0]+0.7152*pixel[i+1]+0.0722*pixel[i+2]);
-            var oldPixel = gray+gray*map/17;
-            var newPixel = Math.max(0,Math.min(3,Math.floor(oldPixel*3/255)));
+            var gray = Math.floor(0.2126 * pixel[i + 0] + 0.7152 * pixel[i + 1] + 0.0722 * pixel[i + 2]);
+            var oldPixel = gray + gray * map / 17;
+            var newPixel = Math.max(0, Math.min(3, Math.floor(oldPixel * 3 / 255)));
             
-            for(var k=0; k<4; k++) {
-                for(var h=0; h<4; h++) {
-                    var j = 16*x+64*width*y+4*h+16*width*k;
-                    output.data[j+0] = GBSelfie.colors[3*newPixel+0];
-                    output.data[j+1] = GBSelfie.colors[3*newPixel+1];
-                    output.data[j+2] = GBSelfie.colors[3*newPixel+2];
-                    output.data[j+3] = 255;
+            for(var k = 0; k < 4; k++) {
+                for(var h = 0; h < 4; h++) {
+                    var j = 16 * x + 64 * width * y + 4 * h + 16 * width * k;
+                    output.data[j + 0] = GBSelfie.colors[3 * newPixel + 0];
+                    output.data[j + 1] = GBSelfie.colors[3 * newPixel + 1];
+                    output.data[j + 2] = GBSelfie.colors[3 * newPixel + 2];
+                    output.data[j + 3] = 255;
                 }
             }
         }
@@ -139,16 +155,18 @@ var GBSelfie = {
 	},
 	draw: function(timestamp) {
         GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
+		
 		if(GBSelfie.filterOutput) {
-			GBSelfie.ctx.putImageData(GBSelfie.filterOutput,0,0);
+			GBSelfie.ctx.putImageData(GBSelfie.filterOutput, 0, 0);
 		}
     },
     orient: function() {
         var w = GBSelfie.video.videoWidth;
         var h = GBSelfie.video.videoHeight;
-        GBSelfie.scale = Math.min(Math.floor(w/10),Math.floor(h/9));
-        GBSelfie.offsetX = Math.floor((w-10*GBSelfie.scale)/2);
-        GBSelfie.offsetY = Math.floor((h-9*GBSelfie.scale)/2);
+		
+        GBSelfie.scale = Math.min(Math.floor(w / 10), Math.floor(h / 9));
+        GBSelfie.offsetX = Math.floor((w - 10 * GBSelfie.scale) / 2);
+        GBSelfie.offsetY = Math.floor((h - 9 * GBSelfie.scale) / 2);
     },
     hideWebcam: function() {
         if(GBSelfie.video) {
@@ -157,7 +175,9 @@ var GBSelfie = {
             GBSelfie.draft = null;
 			GBSelfie.canvas.style.backgroundImage = "url(\"images/nowebcam.png\")";
         }
-        GBSelfie.alertBox.className = GBSelfie.alertBox.className.replace(/alert-\w+/,"alert-danger");
+		
+        GBSelfie.alertBox.classList.remove("alert-success", "alert-warning");
+		GBSelfie.alertBox.classList.add("alert-danger");
         GBSelfie.alertBox.innerHTML = "<strong>Oops!</strong> Sorry, but we can't access your webcam!";
     }
 };
