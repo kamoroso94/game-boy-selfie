@@ -1,198 +1,213 @@
 "use strict";
-//MediaStream: onended, oninactive, onactive :)
-var GBSelfie = {
-    localMediaStream: null,
-    video: null,
-    sound: null,
-    canvas: null,
-    ctx: null,
-	TPS: 30,
-	frameDrawn: true,
-    draft: null,
-    draftCtx: null,
-	filterOutput: null,
-    alertBox: null,
-    shutter: null,
-    offsetX: 0,
-    offsetY: 0,
-    scale: 1,
-    drawId: 0,
-    tickId: 0,
-    colors: [
-         15, 56, 15,
-         48, 98, 48,
-        139,172, 15,
-        155,188, 15
-    ],
-    thresholdMap4x4: [
-        [ 1, 9, 3,11],
-        [13, 5,15, 7],
-        [ 4,12, 2,10],
-        [16, 8,14, 6]
-    ],
-    init: function() {
-        GBSelfie.sound = new Audio();
-		
-        if(GBSelfie.sound.canPlayType("audio/mpeg")) {
-            GBSelfie.sound.src = "audio/shutter.mp3";
-        } else {
-            GBSelfie.sound.src = "audio/shutter.ogg";
-        }
-        
-		GBSelfie.sound.preload = "auto";
-        GBSelfie.video = document.querySelector("video");
-        GBSelfie.canvas = document.getElementById("screen");
-        GBSelfie.ctx = GBSelfie.canvas.getContext("2d");
-        GBSelfie.shutter = document.getElementById("shutter");
-        GBSelfie.draft = document.createElement("canvas");
-        GBSelfie.draft.width = 160;
-        GBSelfie.draft.height = 144;
-        GBSelfie.draft.style.display = "none";
-        GBSelfie.draftCtx = GBSelfie.draft.getContext("2d");
-        GBSelfie.alertBox = document.querySelector(".alert");
-		
-		if(navigator.getUserMedia) {
-			navigator.getUserMedia(
-				{video: {width: 160, height: 144, facingMode: "user"}},
-				GBSelfie.load,
-				function(e) {
-					console.log(e);
-					GBSelfie.hideWebcam();
-				}
+
+class GBSelfie {
+    constructor() {
+    	this.video = null;
+    	this.sound = null;
+    	this.display = null;
+    	this.canvas = null;
+    	this.ctx = null;
+    	this.draft = null;
+    	this.draftCtx = null;
+    	this.filterOutput = null;
+    	this.shutter = null;
+    	this.offsetX = 0;
+    	this.offsetY = 0;
+    	this.scale = 1;
+
+        // GB colors            grayscale colors
+    	this.colors = [
+            [ 15,  56,  15],    // [  0,   0,   0],
+            [ 48,  98,  48],    // [ 85,  85,  85],
+            [139, 172,  15],    // [170, 170, 170],
+            [155, 188,  15]     // [255, 255, 255]
+        ];
+
+        // 8-bit grayscale to 2-bit monochrome GB,
+        // 256 / 4 = 64 = 8 x 8 threshold map
+    	this.thresholdMap = [
+        	[ 0, 48, 12, 60,  3, 51, 15, 63],
+        	[32, 16, 44, 28, 35, 19, 47, 31],
+        	[ 8, 56,  4, 52, 11, 59,  7, 55],
+        	[40, 24, 36, 20, 43, 27, 39, 23],
+        	[ 2, 50, 14, 62,  1, 49, 13, 61],
+        	[34, 18, 46, 30, 33, 17, 45, 29],
+        	[10, 58,  6, 54,  9, 57,  5, 53],
+        	[42, 26, 38, 22, 41, 25, 37, 21]
+        ];
+    }
+
+	init() {
+		const width = 160;
+		const height = 144;
+
+		this.initDisplay();
+
+		this.sound = new Audio();
+		this.sound.src = `audio/shutter.${this.sound.canPlayType("audio/mpeg") ? "mp3" : "ogg"}`;
+		this.sound.preload = "auto";
+		this.video = document.querySelector("video");
+		this.canvas = document.getElementById("screen");
+		this.ctx = this.canvas.getContext("2d");
+		this.shutter = document.getElementById("shutter");
+		this.draft = document.createElement("canvas");
+		this.draft.width = width;
+		this.draft.height = height;
+		this.draft.style.display = "none";
+		this.draftCtx = this.draft.getContext("2d");
+        this.alertBox = document.querySelector(".alert");
+
+		this.initVideo(width, height);
+	}
+
+	initDisplay() {
+		this.display = new Game();
+
+		this.display.addEventListener("draw", (event) => {
+			// const {dt} = event.detail;
+
+			if(this.filterOutput != null) {
+				this.ctx.putImageData(this.filterOutput, 0, 0);
+				this.filterOutput = null;
+			}
+		});
+
+		this.display.addEventListener("tick", (event) => {
+			// const {dt} = event.detail;
+            const clamp = (val, min, max) => Math.max(min, Math.min(val, max));
+            const intensity = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            const mapSide = this.thresholdMap.length;
+            const mapSize = mapSide ** 2;
+            const colors = this.colors.length;
+
+			this.draftCtx.drawImage(
+				this.video,
+				this.offsetX,
+				this.offsetY,
+				10 * this.scale + this.offsetX,
+				9 * this.scale + this.offsetY,
+				0,
+				0,
+				this.draft.width,
+				this.draft.height
 			);
+			const input = this.draftCtx.getImageData(
+				0,
+				0,
+				this.draft.width,
+				this.draft.height
+			);
+			const output = this.draftCtx.createImageData(640, 576);
+
+			// imageData
+			const width = input.width;
+			const height = input.height;
+			const pixels = input.data;
+
+			// filter
+			for(let i = 0; i < pixels.length; i += 4) {
+				const x = i / 4 % width;
+				const y = Math.floor(i / 4 / width);
+				const threshold = this.thresholdMap[x % mapSide][y % mapSide];
+				const gray = intensity(pixels[i + 0], pixels[i + 1], pixels[i + 2]);
+                const nearestPixel = clamp(Math.floor(colors * gray / 256 + threshold / mapSize - 0.5), 0, colors - 1);
+
+				for(let k = 0; k < 4; k++) {
+					for(let h = 0; h < 4; h++) {
+						const j = 16 * x + 64 * width * y + 4 * h + 16 * width * k;
+						output.data[j + 0] = this.colors[nearestPixel][0];
+						output.data[j + 1] = this.colors[nearestPixel][1];
+						output.data[j + 2] = this.colors[nearestPixel][2];
+						output.data[j + 3] = 255;
+					}
+				}
+			}
+
+			this.filterOutput = output;
+		});
+	}
+
+	initVideo(width, height) {
+        const constraints = {video: {width, height, facingMode: "user"}};
+
+		if(navigator.mediaDevices) {
+			navigator.mediaDevices.getUserMedia(constraints)
+                .then((stream) => this.loadVideo(stream))
+                .catch((error) => {
+    				console.log(error);
+    				this.hideWebcam();
+    			});
+		} else if(navigator.getUserMedia) {
+			navigator.getUserMedia(constraints,
+                (stream) => this.loadVideo(stream),
+                (error) => {
+					console.log(error);
+					this.hideWebcam();
+				});
 		} else {
 			console.log("getUserMedia() unsupported");
-			GBSelfie.hideWebcam();
+			this.hideWebcam();
 		}
-    },
-    load: function(stream) {
-        GBSelfie.video.src = window.URL.createObjectURL(stream);
-        GBSelfie.localMediaStream = stream;
-		
-        GBSelfie.video.addEventListener("loadeddata",function() {
-            document.body.appendChild(GBSelfie.draft);
-			GBSelfie.alertBox.classList.remove("alert-warning", "alert-danger");
-			GBSelfie.alertBox.classList.add("alert-success");
-            GBSelfie.alertBox.innerHTML = "<strong>Connected!</strong> Click the camera icon to take a selfie!";
-			
-            GBSelfie.orient();
-            
-            GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
-			GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
-            GBSelfie.shutter.style.display = "block";
-			
-            GBSelfie.shutter.addEventListener("click",function() {
-                var timestamp = Date.now();
-				
-                cancelAnimationFrame(GBSelfie.drawId);
-				clearTimeout(GBSelfie.tick);
-				
-                setTimeout(function() {
-                    GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
-					GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
-                }, 500);
-                
-				GBSelfie.sound.currentTime = 0;
-                GBSelfie.sound.play();
-				
-                this.href = GBSelfie.canvas.toDataURL();
-                this.download = "img" + timestamp + ".png";
-            });
-        });
-    },
-    tick: function() {
-		GBSelfie.tickId = setTimeout(GBSelfie.tick, 1000 / GBSelfie.TPS);
-		
-		if(!GBSelfie.frameDrawn) {
-			console.log("Skipped tick");
-			return;
-		}
-		
-        GBSelfie.draftCtx.drawImage(
-            GBSelfie.video,
-            GBSelfie.offsetX,
-            GBSelfie.offsetY,
-            10 * GBSelfie.scale + GBSelfie.offsetX,
-            9 * GBSelfie.scale + GBSelfie.offsetY,
-            0,
-            0,
-            GBSelfie.draft.width,
-            GBSelfie.draft.height
-        );
-		
-        var input = GBSelfie.draftCtx.getImageData(
-            0,
-            0,
-            GBSelfie.draft.width,
-            GBSelfie.draft.height
-        );
-        var output = GBSelfie.draftCtx.createImageData(640, 576);
-        
-        // imageData
-        var width = input.width;
-        var height = input.height;
-        var pixel = input.data;
+	}
 
-        // filter
-        for(var i = 0; i < pixel.length; i += 4) {
-            var x = i / 4 % width;
-            var y = Math.floor(i / 4 / width);
-            var map = GBSelfie.thresholdMap4x4[x % 4][y % 4];
-            
-            var gray = Math.floor(0.2126 * pixel[i + 0] + 0.7152 * pixel[i + 1] + 0.0722 * pixel[i + 2]);
-            var oldPixel = gray + gray * map / 17;
-            var newPixel = Math.max(0, Math.min(3, Math.floor(oldPixel * 3 / 255)));
-            
-            for(var k = 0; k < 4; k++) {
-                for(var h = 0; h < 4; h++) {
-                    var j = 16 * x + 64 * width * y + 4 * h + 16 * width * k;
-                    output.data[j + 0] = GBSelfie.colors[3 * newPixel + 0];
-                    output.data[j + 1] = GBSelfie.colors[3 * newPixel + 1];
-                    output.data[j + 2] = GBSelfie.colors[3 * newPixel + 2];
-                    output.data[j + 3] = 255;
-                }
-            }
-        }
-		GBSelfie.filterOutput = output;
-		GBSelfie.frameDrawn = false;
-	},
-	draw: function(timestamp) {
-        GBSelfie.drawId = requestAnimationFrame(GBSelfie.draw);
-		
-		if(GBSelfie.frameDrawn) {
-			console.log("Skipped draw");
-			return;
+	loadVideo(stream) {
+		if("srcObject" in this.video) {
+			this.video.srcObject = stream;
+		} else {
+			this.video.src = window.URL.createObjectURL(stream); // throw new Error("video.srcObject unsupported");
 		}
-		
-		GBSelfie.ctx.putImageData(GBSelfie.filterOutput, 0, 0);
-		GBSelfie.frameDrawn = true;
-    },
-    orient: function() {
-        var w = GBSelfie.video.videoWidth;
-        var h = GBSelfie.video.videoHeight;
-		
-        GBSelfie.scale = Math.min(Math.floor(w / 10), Math.floor(h / 9));
-        GBSelfie.offsetX = Math.floor((w - 10 * GBSelfie.scale) / 2);
-        GBSelfie.offsetY = Math.floor((h - 9 * GBSelfie.scale) / 2);
-    },
-    hideWebcam: function() {
-        if(GBSelfie.video) {
-            GBSelfie.video.parentNode.removeChild(GBSelfie.video);
-            GBSelfie.video = null;
-            GBSelfie.draft = null;
-			GBSelfie.canvas.style.backgroundImage = "url(\"images/nowebcam.png\")";
-        }
-		
-        GBSelfie.alertBox.classList.remove("alert-success", "alert-warning");
-		GBSelfie.alertBox.classList.add("alert-danger");
-        GBSelfie.alertBox.innerHTML = "<strong>Oops!</strong> Sorry, but we can't access your webcam!";
+
+		this.video.addEventListener("loadeddata", (event) => {
+			document.body.appendChild(this.draft);
+            this.alert("success", "Connected!", "Click the camera icon to take a selfie!");
+
+			this.orient();
+
+			this.shutter.style.display = "block";
+			this.shutter.addEventListener("click", (event) => {
+				const timestamp = Date.now();
+
+				this.display.pause();
+				setTimeout(() => {
+					this.display.resume();
+				}, 500);
+				this.sound.currentTime = 0;
+				this.sound.play();
+				this.shutter.href = this.canvas.toDataURL();
+				this.shutter.download = `img${timestamp}`;
+			});
+
+            this.shutter.classList.add("active");
+            this.display.resume();
+		});
+	}
+
+	orient() {
+		const w = this.video.videoWidth;
+		const h = this.video.videoHeight;
+		this.scale = Math.min(Math.floor(w / 10), Math.floor(h / 9));
+		this.offsetX = Math.floor((w - 10 * this.scale) / 2);
+		this.offsetY = Math.floor((h - 9 * this.scale) / 2);
+	}
+
+    alert(type, title, message) {
+        this.alertBox.classList.remove("alert-success", "alert-warning", "alert-danger");
+        this.alertBox.classList.add(`alert-${type}`);
+        this.alertBox.innerHTML = `<strong>${title}</strong> ${message}`;
     }
-};
 
-navigator.getUserMedia = navigator.getUserMedia ||
-    navigator.webkitGetUserMedia ||
-    navigator.mozGetUserMedia ||
-    navigator.msGetUserMedia;
+	hideWebcam() {
+		this.video.parentNode.removeChild(this.video);
+        this.canvas.style.backgroundImage = `url("images/error.png")`;
+        this.shutter.classList.remove("active");
+        this.display.pause();
+        this.alert("danger", "Oops!", "Sorry, but we can't access your webcam!");
+	}
+}
 
-window.addEventListener("orientationchange", GBSelfie.orient);
-window.addEventListener("load",GBSelfie.init);
+window.addEventListener("load", (event) => {
+    const gbselfie = new GBSelfie();
+    gbselfie.init();
+
+    window.addEventListener("orientationchange", gbselfie.orient());
+});

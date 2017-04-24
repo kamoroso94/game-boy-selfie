@@ -1,30 +1,30 @@
 @font-face {
-  font-family: "Game Boy";
-  src: url("fonts/gameboy.eot");
-  src: url("fonts/gameboy.eot?#iefix") format("embedded-opentype"),
-		url("fonts/gameboy.woff") format("woff"),
-		url("fonts/gameboy.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
+    font-family: "Game Boy";
+    src: url("fonts/gameboy.eot");
+    src: url("fonts/gameboy.eot?#iefix") format("embedded-opentype"),
+        url("fonts/gameboy.woff") format("woff"),
+        url("fonts/gameboy.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: "Gill Sans MT";
-  src: url("fonts/gillsansmt.eot");
-  src: local("Gill Sans MT"),
-		url("fonts/gillsansmt.eot?#iefix") format("embedded-opentype"),
-		url("fonts/gillsansmt.woff") format("woff"),
-		url("fonts/gillsansmt.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
+    font-family: "Gill Sans MT";
+    src: url("fonts/gillsansmt.eot");
+    src: local("Gill Sans MT"),
+        url("fonts/gillsansmt.eot?#iefix") format("embedded-opentype"),
+        url("fonts/gillsansmt.woff") format("woff"),
+        url("fonts/gillsansmt.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
 }
 
 .container {
-	font-family: "Game Boy",monospace;
+	font-family: "Game Boy", monospace;
 }
 
 header {
-	font-family: "Gill Sans MT",arial,sans-serif;
+	font-family: "Gill Sans MT", arial, sans-serif;
 	font-style: italic;
 }
 
@@ -58,7 +58,7 @@ canvas {
 	left: 10%;
 	width: 80%;
 	height: 16.666666666666668%;
-	background: url("images/camera2.png");
+	background: url("images/camera.png");
 	background-position: 0% 0%;
 	background-size: cover;
 	cursor: pointer;
@@ -71,6 +71,6 @@ canvas {
 
 img.gb {
 	display: block;
-	margin-bottom: 20px;
+	margin-bottom: 2em;
 	width: 100%;
 }
