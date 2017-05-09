@@ -23,6 +23,24 @@
 	font-family: "Game Boy", monospace;
 }
 
+@media (min-width: 768px) {
+    .text-sm-left {
+        text-align: left;
+    }
+
+    .text-sm-center {
+        text-align: center;
+    }
+
+    .text-sm-justify {
+        text-align: justify;
+    }
+
+    .text-sm-right {
+        text-align: right;
+    }
+}
+
 header {
 	font-family: "Gill Sans MT", arial, sans-serif;
 	font-style: italic;
@@ -43,30 +61,37 @@ video {
 
 #camera {
 	position: relative;
+    overflow: hidden;
 }
 
 canvas {
+    display: block;
 	width: 100%;
 	background: url("images/thumb.png");
 	background-size: cover;
 }
 
 #shutter {
-	display: none;
+	transition: transform 0.5s;
+	display: none; /* shown on successful camera load */
 	position: absolute;
-	bottom: 5.555555555555555%;
+	bottom: 5.555555556%;
 	left: 10%;
+    transform: translate(0, 133.3333333%);
 	width: 80%;
-	height: 16.666666666666668%;
+	height: 16.66666667%;
 	background: url("images/camera.png");
 	background-position: 0% 0%;
 	background-size: cover;
 	cursor: pointer;
-	z-index: 1;
 }
 
 #shutter:active {
 	background-position: 0% 100%;
+}
+
+#camera:hover #shutter {
+    transform: translate(0, 0);
 }
 
 img.gb {
