@@ -20,7 +20,7 @@
 }
 
 .container {
-	font-family: "Game Boy", monospace;
+    font-family: "Game Boy", monospace;
 }
 
 @media (min-width: 768px) {
@@ -42,52 +42,52 @@
 }
 
 header {
-	font-family: "Gill Sans MT", arial, sans-serif;
-	font-style: italic;
+    font-family: "Gill Sans MT", arial, sans-serif;
+    font-style: italic;
 }
 
 header h1 {
-	color: #101880;
+    color: #101880;
 }
 
 #gameboy {
-	margin: 0px auto;
-	max-width: 640px;
+    margin: 0px auto;
+    max-width: 640px;
 }
 
 video {
-	display: none;
+    display: none;
 }
 
 #camera {
-	position: relative;
+    position: relative;
     overflow: hidden;
 }
 
 canvas {
     display: block;
-	width: 100%;
-	background: url("images/thumb.png");
-	background-size: cover;
+    width: 100%;
+    background: url("images/thumb.png");
+    background-size: cover;
 }
 
 #shutter {
-	transition: transform 0.5s;
-	display: none; /* shown on successful camera load */
-	position: absolute;
-	bottom: 5.555555556%;
-	left: 10%;
+    transition: transform 0.5s;
+    display: none; /* shown on successful camera load */
+    position: absolute;
+    bottom: 5.555555556%;
+    left: 10%;
     transform: translate(0, 133.3333333%);
-	width: 80%;
-	height: 16.66666667%;
-	background: url("images/camera.png");
-	background-position: 0% 0%;
-	background-size: cover;
-	cursor: pointer;
+    width: 80%;
+    height: 16.66666667%;
+    background: url("images/camera.png");
+    background-position: 0% 0%;
+    background-size: cover;
+    cursor: pointer;
 }
 
 #shutter:active {
-	background-position: 0% 100%;
+    background-position: 0% 100%;
 }
 
 #camera:hover #shutter {
@@ -95,7 +95,7 @@ canvas {
 }
 
 img.gb {
-	display: block;
-	margin-bottom: 2em;
-	width: 100%;
+    display: block;
+    margin-bottom: 2em;
+    width: 100%;
 }
