@@ -19,10 +19,6 @@
     font-style: normal;
 }
 
-.container {
-    font-family: "Game Boy", monospace;
-}
-
 @media (min-width: 768px) {
     .text-sm-left {
         text-align: left;
@@ -41,6 +37,14 @@
     }
 }
 
+.container {
+    font-family: "Game Boy", monospace;
+}
+
+.hidden {
+    display: none;
+}
+
 header {
     font-family: "Gill Sans MT", arial, sans-serif;
     font-style: italic;
@@ -50,52 +54,58 @@ header h1 {
     color: #101880;
 }
 
-#gameboy {
-    margin: 0px auto;
+#gb-console {
+    margin: 0 auto 2em;
     max-width: 640px;
 }
 
-video {
-    display: none;
-}
-
-#camera {
+#gb-top {
     position: relative;
     overflow: hidden;
 }
 
-canvas {
+#gb-screen {
     display: block;
     width: 100%;
-    background: url("images/thumb.png");
+    background-image: url("images/thumb.png");
     background-size: cover;
 }
 
-#shutter {
+.gb-button {
     transition: transform 0.5s;
-    display: none; /* shown on successful camera load */
     position: absolute;
-    bottom: 5.555555556%;
-    left: 10%;
-    transform: translate(0, 133.3333333%);
-    width: 80%;
-    height: 16.66666667%;
-    background: url("images/camera.png");
-    background-position: 0% 0%;
+    background-position: 0 0;
     background-size: cover;
     cursor: pointer;
 }
 
-#shutter:active {
-    background-position: 0% 100%;
+.gb-button:active {
+    background-position: 0 100%;
 }
 
-#camera:hover #shutter {
-    transform: translate(0, 0);
+#gb-top:hover .gb-button {
+    transform: translateY(0);
 }
 
-img.gb {
+#gb-flip {
+    top: 5.555555556%;
+    right: 5%;
+    transform: translateY(-133.3333333%);
+    width: 15%;
+    height: 16.66666667%;
+    background-image: url("images/flip.png");
+}
+
+#gb-shutter {
+    bottom: 5.555555556%;
+    left: 10%;
+    transform: translateY(133.3333333%);
+    width: 80%;
+    height: 16.66666667%;
+    background-image: url("images/camera.png");
+}
+
+#gb-bottom {
     display: block;
-    margin-bottom: 2em;
     width: 100%;
 }

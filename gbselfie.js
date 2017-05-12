@@ -10,31 +10,9 @@ class GBSelfie {
         this.draft = null;
         this.draftCtx = null;
         this.filterOutput = null;
-        this.shutter = null;
-        this.offsetX = 0;
-        this.offsetY = 0;
+        this.isMirrored = true;
+        this.offsetX = this.offsetY = 0;
         this.scale = 1;
-
-        // GB colors            grayscale colors
-        this.colors = [
-            [ 15,  56,  15],    // [  0,   0,   0],
-            [ 48,  98,  48],    // [ 85,  85,  85],
-            [139, 172,  15],    // [170, 170, 170],
-            [155, 188,  15]     // [255, 255, 255]
-        ];
-
-        // 8-bit grayscale to 2-bit monochrome GB,
-        // 256 / 4 = 64 = 8 x 8 threshold map
-        this.thresholdMap = [
-            [ 0, 48, 12, 60,  3, 51, 15, 63],
-            [32, 16, 44, 28, 35, 19, 47, 31],
-            [ 8, 56,  4, 52, 11, 59,  7, 55],
-            [40, 24, 36, 20, 43, 27, 39, 23],
-            [ 2, 50, 14, 62,  1, 49, 13, 61],
-            [34, 18, 46, 30, 33, 17, 45, 29],
-            [10, 58,  6, 54,  9, 57,  5, 53],
-            [42, 26, 38, 22, 41, 25, 37, 21]
-        ];
     }
 
     init() {
@@ -47,15 +25,14 @@ class GBSelfie {
         this.sound.src = `audio/shutter.${this.sound.canPlayType("audio/mpeg") ? "mp3" : "ogg"}`;
         this.sound.preload = "auto";
         this.video = document.querySelector("video");
-        this.canvas = document.getElementById("screen");
+        this.canvas = document.getElementById("gb-screen");
         this.ctx = this.canvas.getContext("2d");
-        this.shutter = document.getElementById("shutter");
         this.draft = document.createElement("canvas");
+        this.draftCtx = this.draft.getContext("2d");
+
         this.draft.width = width;
         this.draft.height = height;
         this.draft.style.display = "none";
-        this.draftCtx = this.draft.getContext("2d");
-        this.alertBox = document.querySelector(".alert");
 
         this.initVideo(width, height);
     }
@@ -65,20 +42,37 @@ class GBSelfie {
 
         this.display.addEventListener("draw", (event) => {
             // const {dt} = event.detail;
-
             if(this.filterOutput != null) {
                 this.ctx.putImageData(this.filterOutput, 0, 0);
                 this.filterOutput = null;
             }
         });
 
+        // GB colors            grayscale colors
+        const colors = [
+            [ 15,  56,  15],    // [  0,   0,   0],
+            [ 48,  98,  48],    // [ 85,  85,  85],
+            [139, 172,  15],    // [170, 170, 170],
+            [155, 188,  15]     // [255, 255, 255]
+        ];
+        // 256 color (8-bit) grayscale to 4 color (2-bit) grayscale,
+        // 256 / 4 = 64 = 8 x 8 threshold map
+        const thresholdMap = [
+            [ 0, 48, 12, 60,  3, 51, 15, 63],
+            [32, 16, 44, 28, 35, 19, 47, 31],
+            [ 8, 56,  4, 52, 11, 59,  7, 55],
+            [40, 24, 36, 20, 43, 27, 39, 23],
+            [ 2, 50, 14, 62,  1, 49, 13, 61],
+            [34, 18, 46, 30, 33, 17, 45, 29],
+            [10, 58,  6, 54,  9, 57,  5, 53],
+            [42, 26, 38, 22, 41, 25, 37, 21]
+        ];
+
         this.display.addEventListener("tick", (event) => {
             // const {dt} = event.detail;
             const intensity = (r, g, b) => Math.floor(0.2126 * r + 0.7152 * g + 0.0722 * b);
             const clamp = (val, min, max) => Math.max(min, Math.min(val, max));
-            const mapSide = this.thresholdMap.length;
-            const mapSize = mapSide ** 2;
-            const numColors = this.colors.length;
+            const mapSide = thresholdMap.length;
 
             this.draftCtx.drawImage(this.video, this.offsetX, this.offsetY, 10 * this.scale + this.offsetX, 9 * this.scale + this.offsetY,
                 0, 0, this.draft.width, this.draft.height);
@@ -95,18 +89,20 @@ class GBSelfie {
                 const x = i / 4 % width;
                 const y = Math.floor(i / 4 / width);
                 const gray = intensity(...pixels.slice(i, i + 3));
-                const threshold = this.thresholdMap[x % mapSide][y % mapSide];
-                const nearestPixel = Math.floor(clamp(numColors * gray / 256 + threshold / mapSize - 0.5, 0, numColors - 1));
+                const thresholdX = this.isMirrored ? mapSide - 1 - x % mapSide : x % mapSide;
+                const thresholdY = y % mapSide;
+                const threshold = thresholdMap[thresholdX][thresholdY];
+                const nearestPixel = Math.floor(clamp(gray / 64 + threshold / 64 - 0.5, 0, 3)); // floor(clamp(colors * gray / 256 + threshold / mapsize - 0.5, 0, colors - 1))
 
                 for(let k = 0; k < 4; k++) {
                     for(let h = 0; h < 4; h++) {
-                        const j = 16 * x + 64 * width * y + 4 * h + 16 * width * k;
-                        output.data[j + 0] = this.colors[nearestPixel][0];
-                        output.data[j + 1] = this.colors[nearestPixel][1];
-                        output.data[j + 2] = this.colors[nearestPixel][2];
+                        const outX = this.isMirrored ? width - 1 - x : x;
+                        const j = 16 * outX + 64 * width * y + 4 * h + 16 * width * k;
+                        output.data[j + 0] = colors[nearestPixel][0];
+                        output.data[j + 1] = colors[nearestPixel][1];
+                        output.data[j + 2] = colors[nearestPixel][2];
                         output.data[j + 3] = 255;
-                        // too slow :(
-                        // output.data.set(this.colors[nearestPixel].concat(255), j);
+                        // output.data.set(colors[nearestPixel].concat(255), j);
                     }
                 }
             }
@@ -151,8 +147,10 @@ class GBSelfie {
 
             this.orient();
 
-            this.shutter.style.display = "block";
-            this.shutter.addEventListener("click", (event) => {
+            document.querySelectorAll(".gb-button").forEach(button => button.classList.remove("hidden"));   // show buttons
+
+            const shutterBtn = document.getElementById("gb-shutter");
+            shutterBtn.addEventListener("click", (event) => {
                 const timestamp = Date.now();
 
                 this.display.pause();
@@ -161,11 +159,15 @@ class GBSelfie {
                 }, 500);
                 this.sound.currentTime = 0;
                 this.sound.play();
-                this.shutter.href = this.canvas.toDataURL();
-                this.shutter.download = `img${timestamp}`;
+                shutterBtn.href = this.canvas.toDataURL();
+                shutterBtn.download = `img${timestamp}`;
             });
 
-            this.shutter.classList.add("active");
+            const flipBtn = document.getElementById("gb-flip");
+            flipBtn.addEventListener("click", (event) => {
+                this.isMirrored = !this.isMirrored;
+            });
+
             this.display.resume();
         });
     }
@@ -179,16 +181,18 @@ class GBSelfie {
     }
 
     alert(type, title, message) {
-        this.alertBox.classList.remove("alert-success", "alert-warning", "alert-danger");
-        this.alertBox.classList.add(`alert-${type}`);
-        this.alertBox.innerHTML = `<strong>${title}</strong> ${message}`;
+        const alertBox = document.getElementById("gb-alert");
+        alertBox.classList.remove("alert-success", "alert-warning", "alert-danger", "hidden");
+        alertBox.classList.add(`alert-${type}`);
+        alertBox.querySelector(".alert-heading").textContent = title;
+        alertBox.querySelector(".alert-body").textContent = message;
     }
 
     hideWebcam() {
         this.video.parentNode.removeChild(this.video);
         this.canvas.style.backgroundImage = `url("images/error.png")`;
-        this.shutter.classList.remove("active");
         this.display.pause();
+        document.querySelectorAll(".gb-button").forEach(button => button.classList.add("hidden"));   // hide buttons
         this.alert("danger", "Oops!", "Sorry, but we can't access your webcam!");
     }
 }
@@ -196,6 +200,5 @@ class GBSelfie {
 window.addEventListener("load", (event) => {
     const gbselfie = new GBSelfie();
     gbselfie.init();
-
     window.addEventListener("orientationchange", gbselfie.orient());
 });

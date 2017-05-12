@@ -10,7 +10,7 @@
         <meta name="author" content="Kyle Amoroso" />
         <meta name="description" content="A selfie web filter that lets you capture yourself in a Nintendo Game Boy." />
         <meta name="keywords" content="game boy selfie,nintendo,game boy,selfie,filter,html5" />
-        <meta name="version" content="1.2" />
+        <meta name="version" content="1.3" />
         <meta property="og:title" content="Game Boy Selfie" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://kamoroso94.github.io/game-boy-selfie/" />
@@ -26,7 +26,6 @@
 
         <!-- Bootstrap + JQuery -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
         <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
@@ -43,17 +42,20 @@
                 <p class="lead text-uppercase text-muted">Capture yourself in a Nintendo Game Boy</p>
             </header>
 
-            <div class="alert alert-warning" role="status">
-                <strong>Wait!</strong> You must grant the browser permission to access your webcam!
+            <div role="status" class="alert alert-warning" id="gb-alert">
+                <a href="#" role="button" class="close" aria-label="close">&times;</a>
+                <strong class="alert-heading">Wait!</strong>
+                <span class="alert-body">You must grant the browser permission to access your webcam!</span>
             </div>
 
-            <div id="gameboy">
-                <video autoplay></video>
-                <div id="camera">
-                    <canvas id="screen" width="640" height="576"></canvas>
-                    <a href="#" download="" role="button" title="Take a selfie!" id="shutter"></a>
+            <div id="gb-console">
+                <video autoplay class="hidden"></video>
+                <div id="gb-top">
+                    <canvas id="gb-screen" width="640" height="576"></canvas>
+                    <div role="button" title="Flip camera" class="gb-button hidden" id="gb-flip"></div>
+                    <a href="#" download="" role="button" title="Take a selfie!" class="gb-button hidden" id="gb-shutter"></a>
                 </div>
-                <img src="images/controls.png" class="gb" />
+                <img src="images/controls.png" id="gb-bottom" />
             </div>
 
             <div class="panel panel-default">
@@ -73,6 +75,18 @@
                 <p>Game Boy Selfie created by Kyle Amoroso. Game Boy&reg; is a trademark of Nintendo Co., Ltd. which does not sponsor, authorise, or endorse this site in any way.</p>
             </footer>
         </div>
+
+        <!-- Setup alert close action -->
+        <script>
+            document.querySelectorAll(".alert").forEach((alert) => {
+                alert.querySelectorAll(".close").forEach((close) => {
+                    close.addEventListener("click", (event) => {
+                        event.preventDefault();
+                        alert.classList.add("hidden");
+                    });
+                });
+            });
+        </script>
 
         <!-- Go to www.addthis.com/dashboard to customize your tools -->
         <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-4f6488a45d1269e7"></script>
