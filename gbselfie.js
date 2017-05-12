@@ -32,7 +32,7 @@ class GBSelfie {
 
         this.draft.width = width;
         this.draft.height = height;
-        this.draft.style.display = "none";
+        this.draft.classList.add("hidden");
 
         this.initVideo(width, height);
     }
