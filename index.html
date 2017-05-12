@@ -51,7 +51,7 @@
             <div id="gb-console">
                 <video autoplay class="hidden"></video>
                 <div id="gb-top">
-                    <canvas id="gb-screen" width="640" height="576"></canvas>
+                    <canvas width="640" height="576" id="gb-screen"></canvas>
                     <div role="button" title="Flip camera" class="gb-button hidden" id="gb-flip"></div>
                     <a href="#" download="" role="button" title="Take a selfie!" class="gb-button hidden" id="gb-shutter"></a>
                 </div>
@@ -78,6 +78,7 @@
 
         <!-- Setup alert close action -->
         <script>
+            "use strict";
             document.querySelectorAll(".alert").forEach((alert) => {
                 alert.querySelectorAll(".close").forEach((close) => {
                     close.addEventListener("click", (event) => {
